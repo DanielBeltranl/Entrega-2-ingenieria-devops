@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+*.egg-info/
+
+# Environment
+.env
+
+# Claude Code
+.claude/
+CLAUDE.md
+
+# IDE
+.idea/
+.vscode/
+
+# pytest
+.pytest_cache/
+
+# Database (too large for GitHub — lives on the server)
+database.sqlite

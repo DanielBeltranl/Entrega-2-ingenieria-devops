@@ -1,0 +1,88 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Run pytest
+        run: pytest test_api.py -v
+
+  security:
+    name: Security Analysis
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pip-audit
+        run: pip install pip-audit
+
+      - name: Dependency audit (pip-audit)
+        run: pip-audit -r requirements.txt
+
+      - name: Snyk code analysis
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=requirements.txt
+
+  deploy:
+    name: Deploy (DigitalOcean)
+    needs: security
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: root
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            REPO_DIR=/opt/tennis-api
+
+            if [ -d "$REPO_DIR/.git" ]; then
+              cd $REPO_DIR && git pull
+            else
+              git clone https://github.com/${{ github.repository }}.git $REPO_DIR
+              cd $REPO_DIR
+            fi
+
+            [ -f .env ] || echo "APP_PORT=8000" > .env
+
+            docker compose up -d --build
+
+            for i in $(seq 1 10); do
+              if curl -sf http://localhost:8000/api/rankings/top > /dev/null; then
+                echo "Deploy OK"
+                exit 0
+              fi
+              echo "Waiting... ($i/10)"
+              sleep 3
+            done
+
+            echo "Health check failed"
+            docker compose logs
+            exit 1
