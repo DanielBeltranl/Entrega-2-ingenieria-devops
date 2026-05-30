@@ -41,12 +41,25 @@ jobs:
       - name: Dependency audit (pip-audit)
         run: pip-audit -r requirements.txt
 
-      - name: Snyk code analysis
-        uses: snyk/actions/python@master
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high --file=requirements.txt
+      - name: Install Snyk CLI
+        run: npm install -g snyk
+
+      - name: Authenticate Snyk
+        run: snyk auth ${{ secrets.SNYK_TOKEN }}
+
+      - name: Snyk dependency scan
+        run: |
+          echo "──────────────────────────────────────"
+          echo "  Snyk: scanning requirements.txt"
+          echo "──────────────────────────────────────"
+          snyk test \
+            --severity-threshold=high \
+            --file=requirements.txt \
+            --package-manager=pip \
+            --show-vulnerable-paths=all
+          echo "──────────────────────────────────────"
+          echo "  Snyk: no high/critical CVEs found"
+          echo "──────────────────────────────────────"
 
   deploy:
     name: Deploy (DigitalOcean)
@@ -60,6 +73,7 @@ jobs:
           host: ${{ secrets.DO_HOST }}
           username: root
           key: ${{ secrets.DO_SSH_KEY }}
+          passphrase: ${{ secrets.DO_SSH_PASSPHRASE }}
           script: |
             REPO_DIR=/opt/tennis-api
 
