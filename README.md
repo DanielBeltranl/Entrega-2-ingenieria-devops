@@ -1,87 +1,72 @@
-# Tennis API — Pipeline CI/CD con GitHub Actions
+# Tennis API — CI/CD con GitHub Actions
 
-Microservicio desarrollado en FastAPI que expone estadísticas de tenis (ranking ATP y búsqueda de jugadores). Este documento describe el pipeline de integración y despliegue continuo implementado para la Entrega 2 de Ingeniería DevOps.
-
----
-
-## Descripción del microservicio
-
-La API permite:
-- Consultar el top 5 del ranking ATP
-- Buscar jugadores por nombre
-
-Tecnologías usadas: Python 3.12, FastAPI, SQLAlchemy, SQLite, Docker.
+Microservicio hecho en FastAPI que muestra estadísticas de tenis: ranking ATP y búsqueda de jugadores por nombre. Este README explica cómo funciona el pipeline de CI/CD que automatiza todo el ciclo desde los tests hasta el despliegue.
 
 ---
 
-## Estructura del pipeline (GitHub Actions)
+## ¿Qué hace la API?
 
-El pipeline se dispara automáticamente en cada push a `main` y tiene tres etapas que corren en orden:
+- Muestra el top 5 del ranking ATP
+- Permite buscar jugadores por nombre
+
+Stack: Python 3.12, FastAPI, SQLAlchemy, SQLite, Docker.
+
+---
+
+## Pipeline CI/CD
+
+El pipeline corre automáticamente con cada push a `main` y tiene tres etapas en orden:
 
 ```
 test → security → deploy
 ```
 
-### 1. Unit Tests (IE2)
+Si cualquier etapa falla, las siguientes no se ejecutan.
 
-Se ejecutan con **pytest** usando el archivo `test_api.py`. Si algún test falla, el pipeline se detiene y no avanza a las siguientes etapas.
+### Tests
 
-```yaml
-- name: Run pytest
-  run: pytest test_api.py -v
+Se usan **pytest** para correr los tests unitarios. Si alguno falla, el pipeline para ahí y no avanza.
+
+```bash
+pytest test_api.py -v
 ```
 
-### 2. Análisis de seguridad (IE3)
+### Análisis de seguridad
 
-Esta etapa incluye dos herramientas:
+Se usan dos herramientas:
 
-**pip-audit** — revisa las dependencias del proyecto buscando CVEs conocidos:
-```yaml
-- name: Dependency audit (pip-audit)
-  run: pip-audit -r requirements.txt
-```
+- **pip-audit**: revisa las dependencias buscando vulnerabilidades conocidas
+- **Snyk**: análisis más completo, con umbral en severidad `high`. Si encuentra algo grave, bloquea el deploy
 
-**Snyk** — análisis más profundo de dependencias con umbral de severidad `high`. Si encuentra vulnerabilidades de severidad alta o crítica, el pipeline falla y bloquea el despliegue:
-```yaml
-- name: Snyk dependency scan
-  run: snyk test --severity-threshold=high --file=requirements.txt --package-manager=pip
-```
+El repositorio también tiene **Dependabot** activado, que abre PRs automáticos cuando hay dependencias desactualizadas.
 
-Además, el repositorio tiene **Dependabot** configurado para abrir Pull Requests automáticamente cuando hay actualizaciones de dependencias disponibles.
+### Deploy en DigitalOcean
 
-> Si la etapa de seguridad falla, el job de deploy no se ejecuta porque tiene `needs: security` definido en el pipeline.
+Cuando tests y seguridad pasan, el pipeline se conecta por SSH a un Droplet y despliega la app. El proceso es:
 
-### 3. Deploy automático en DigitalOcean (IE4)
+1. Si ya existe el proyecto en el servidor, hace `git pull`
+2. Si no existe, lo clona
+3. Levanta todo con `docker compose up -d --build`
+4. Verifica que la API responda (`/api/rankings/top`)
+5. Si no responde en 10 intentos, imprime los logs y falla
 
-Una vez que tests y seguridad pasan, el pipeline se conecta por SSH a un Droplet en DigitalOcean y ejecuta el despliegue. El script:
+---
 
-1. Clona el repositorio si no existe, o hace `git pull` si ya estaba
-2. Levanta el servicio con `docker compose up -d --build`
-3. Verifica que la API responda correctamente (health check con `curl`)
-4. Si el health check falla después de 10 intentos, imprime los logs y retorna error
+## Docker
 
-```yaml
-- name: Deploy via SSH
-  uses: appleboy/ssh-action@v1.2.0
-  with:
-    host: ${{ secrets.DO_HOST }}
-    username: root
-    key: ${{ secrets.DO_SSH_KEY }}
+El proyecto tiene un `Dockerfile` basado en `python:3.12-slim`. Por seguridad, la app corre con un usuario sin privilegios de root.
+
+Para correrlo local:
+
+```bash
+docker compose up --build
 ```
 
 ---
 
-## Contenerización (IE1)
+## Docker Compose
 
-El microservicio está contenerizado con Docker. El `Dockerfile` usa una imagen base `python:3.12-slim` y corre la aplicación con un usuario sin privilegios de root por seguridad.
-
-La imagen se construye automáticamente durante el deploy con `docker compose up --build`, lo que garantiza que siempre se despliega la versión más reciente del código.
-
----
-
-## Orquestación con Docker Compose (IE5)
-
-Se usa **Docker Compose** para orquestar el servicio. Permite definir el puerto expuesto y las variables de entorno desde un archivo `.env`:
+Se usa Docker Compose para orquestar el servicio. El puerto y otras variables se configuran en un archivo `.env` que no se sube al repo.
 
 ```yaml
 services:
@@ -93,40 +78,35 @@ services:
       - .env
 ```
 
-El archivo `.env` no se sube al repositorio (está en `.gitignore`) y se crea manualmente en el servidor con las variables necesarias.
-
 ---
 
 ## Trazabilidad y calidad
 
-- **Trazabilidad**: cada push genera una ejecución del pipeline en GitHub Actions con logs completos de cada etapa. Se puede ver exactamente qué commit disparó el deploy, qué tests corrieron y qué analizó Snyk.
-- **Calidad**: el pipeline bloquea el deploy si los tests fallan o si hay vulnerabilidades de seguridad altas. No es posible llegar a producción sin pasar ambas validaciones.
-- **Secrets**: las credenciales del servidor (IP, clave SSH) se almacenan como secrets en GitHub y nunca quedan expuestos en el código.
+Cada push genera una ejecución en GitHub Actions con logs completos. Desde ahí se puede ver exactamente qué commit disparó el deploy, qué tests corrieron y qué analizó Snyk.
+
+El deploy solo llega al servidor si los tests pasan y si no hay vulnerabilidades graves en las dependencias. Las credenciales del servidor están guardadas como secrets en GitHub y nunca se exponen en el código.
 
 ---
 
-## Variables de entorno y secrets necesarios
+## Secrets necesarios
 
-| Nombre | Descripción |
-|--------|-------------|
-| `DO_HOST` | IP del Droplet en DigitalOcean |
-| `DO_SSH_KEY` | Clave privada SSH para conectarse al servidor |
+| Nombre | Para qué sirve |
+|--------|----------------|
+| `DO_HOST` | IP del servidor en DigitalOcean |
+| `DO_SSH_KEY` | Clave SSH para conectarse al servidor |
 | `SNYK_TOKEN` | Token de autenticación de Snyk |
 
 ---
 
-## Cómo correr el proyecto localmente
+## Correr el proyecto local
 
 ```bash
-# Clonar el repositorio
 git clone https://github.com/DanielBeltranl/Entrega-2-ingenieria-devops.git
 cd Entrega-2-ingenieria-devops
 
-# Crear archivo .env
 echo "APP_PORT=8000" > .env
 
-# Levantar con Docker Compose
 docker compose up --build
 ```
 
-La API queda disponible en `http://localhost:8000`.
+La API queda en `http://localhost:8000`.
