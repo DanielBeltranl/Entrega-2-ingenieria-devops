@@ -30,7 +30,7 @@ pytest test_api.py -v
 
 Se usan dos herramientas:
 
-- pip-audit: revisa las dependencias buscando vulnerabilidades conocidas
+- Dependabot: revisa las dependencias buscando vulnerabilidades conocidas
 - Snyk: análisis más completo, con umbral en severidad alto. Si encuentra algo grave, bloquea el deploy
 
 El repositorio también tiene Dependabot activado, que abre PRs automáticos cuando hay dependencias desactualizadas.
