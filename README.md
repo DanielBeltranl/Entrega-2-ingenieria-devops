@@ -1,8 +1,4 @@
-# Tennis API — CI/CD con GitHub Actions
-
-Microservicio hecho en FastAPI que muestra estadísticas de tenis: ranking ATP y búsqueda de jugadores por nombre. Este README explica cómo funciona el pipeline de CI/CD que automatiza todo el ciclo desde los tests hasta el despliegue.
-
----
+# Evaluacion 2 - Ingenieria de software
 
 ## ¿Qué hace la API?
 
@@ -11,7 +7,6 @@ Microservicio hecho en FastAPI que muestra estadísticas de tenis: ranking ATP y
 
 Stack: Python 3.12, FastAPI, SQLAlchemy, SQLite, Docker.
 
----
 
 ## Pipeline CI/CD
 
@@ -36,25 +31,25 @@ pytest test_api.py -v
 Se usan dos herramientas:
 
 - **pip-audit**: revisa las dependencias buscando vulnerabilidades conocidas
-- **Snyk**: análisis más completo, con umbral en severidad `high`. Si encuentra algo grave, bloquea el deploy
+- **Snyk**: análisis más completo, con umbral en severidad alto. Si encuentra algo grave, bloquea el deploy
 
-El repositorio también tiene **Dependabot** activado, que abre PRs automáticos cuando hay dependencias desactualizadas.
+El repositorio también tiene Dependabot activado, que abre PRs automáticos cuando hay dependencias desactualizadas.
 
 ### Deploy en DigitalOcean
 
 Cuando tests y seguridad pasan, el pipeline se conecta por SSH a un Droplet y despliega la app. El proceso es:
 
-1. Si ya existe el proyecto en el servidor, hace `git pull`
+1. Si ya existe el proyecto en el servidor, hace git pull
 2. Si no existe, lo clona
 3. Levanta todo con `docker compose up -d --build`
 4. Verifica que la API responda (`/api/rankings/top`)
 5. Si no responde en 10 intentos, imprime los logs y falla
 
----
+
 
 ## Docker
 
-El proyecto tiene un `Dockerfile` basado en `python:3.12-slim`. Por seguridad, la app corre con un usuario sin privilegios de root.
+El proyecto tiene un Dockerfile basado en python:3.12-slim. Por seguridad, la app corre con un usuario sin privilegios de root.
 
 Para correrlo local:
 
@@ -62,7 +57,7 @@ Para correrlo local:
 docker compose up --build
 ```
 
----
+
 
 ## Docker Compose
 
@@ -78,7 +73,7 @@ services:
       - .env
 ```
 
----
+
 
 ## Trazabilidad y calidad
 
@@ -86,7 +81,7 @@ Cada push genera una ejecución en GitHub Actions con logs completos. Desde ahí
 
 El deploy solo llega al servidor si los tests pasan y si no hay vulnerabilidades graves en las dependencias. Las credenciales del servidor están guardadas como secrets en GitHub y nunca se exponen en el código.
 
----
+
 
 ## Secrets necesarios
 
@@ -96,7 +91,7 @@ El deploy solo llega al servidor si los tests pasan y si no hay vulnerabilidades
 | `DO_SSH_KEY` | Clave SSH para conectarse al servidor |
 | `SNYK_TOKEN` | Token de autenticación de Snyk |
 
----
+
 
 ## Correr el proyecto local
 
