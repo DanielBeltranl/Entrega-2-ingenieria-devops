@@ -1,4 +1,4 @@
-# Evaluacion 2 - Ingenieria de software
+# Evaluacion 2 - Ingenieria devops
 
 ## ¿Qué hace la API?
 
@@ -10,17 +10,17 @@ Stack: Python 3.12, FastAPI, SQLAlchemy, SQLite, Docker.
 
 ## Pipeline CI/CD
 
-El pipeline corre automáticamente con cada push a `main` y tiene tres etapas en orden:
+El pipeline corre automáticamente con cada push a main y tiene tres etapas en orden:
 
 ```
-test → security → deploy
+test → seguridad → despliegue
 ```
 
 Si cualquier etapa falla, las siguientes no se ejecutan.
 
 ### Tests
 
-Se usan **pytest** para correr los tests unitarios. Si alguno falla, el pipeline para ahí y no avanza.
+Se usan pytest para correr los tests unitarios. Si alguno falla, el pipeline para ahí y no avanza.
 
 ```bash
 pytest test_api.py -v
@@ -30,8 +30,8 @@ pytest test_api.py -v
 
 Se usan dos herramientas:
 
-- **pip-audit**: revisa las dependencias buscando vulnerabilidades conocidas
-- **Snyk**: análisis más completo, con umbral en severidad alto. Si encuentra algo grave, bloquea el deploy
+- pip-audit: revisa las dependencias buscando vulnerabilidades conocidas
+- Snyk: análisis más completo, con umbral en severidad alto. Si encuentra algo grave, bloquea el deploy
 
 El repositorio también tiene Dependabot activado, que abre PRs automáticos cuando hay dependencias desactualizadas.
 
@@ -41,8 +41,8 @@ Cuando tests y seguridad pasan, el pipeline se conecta por SSH a un Droplet y de
 
 1. Si ya existe el proyecto en el servidor, hace git pull
 2. Si no existe, lo clona
-3. Levanta todo con `docker compose up -d --build`
-4. Verifica que la API responda (`/api/rankings/top`)
+3. Levanta todo con docker compose up -d --build
+4. Verifica que la API responda (/api/rankings/top)
 5. Si no responde en 10 intentos, imprime los logs y falla
 
 
@@ -61,7 +61,7 @@ docker compose up --build
 
 ## Docker Compose
 
-Se usa Docker Compose para orquestar el servicio. El puerto y otras variables se configuran en un archivo `.env` que no se sube al repo.
+Se usa Docker Compose para orquestar el servicio. El puerto y otras variables se configuran en un archivo .env que no se sube al repo.
 
 ```yaml
 services:
@@ -104,4 +104,4 @@ echo "APP_PORT=8000" > .env
 docker compose up --build
 ```
 
-La API queda en `http://localhost:8000`.
+La pagina queda disponible en `http://104.248.234.200:8000/`.
