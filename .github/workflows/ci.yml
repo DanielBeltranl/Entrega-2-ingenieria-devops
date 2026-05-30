@@ -41,6 +41,9 @@ jobs:
       - name: Dependency audit (pip-audit)
         run: pip-audit -r requirements.txt
 
+      - name: Install project dependencies for Snyk
+        run: pip install -r requirements.txt
+
       - name: Install Snyk CLI
         run: npm install -g snyk
 
