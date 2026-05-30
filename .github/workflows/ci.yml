@@ -89,10 +89,13 @@ jobs:
             [ -f .env ] || echo "APP_PORT=8000" > .env
 
             docker compose up -d --build
+            
+            
 
             for i in $(seq 1 10); do
               if curl -sf http://localhost:8000/api/rankings/top > /dev/null; then
                 echo "Deploy OK"
+                docker ps
                 exit 0
               fi
               echo "Waiting... ($i/10)"
