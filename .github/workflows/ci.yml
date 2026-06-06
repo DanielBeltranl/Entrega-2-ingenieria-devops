@@ -9,7 +9,7 @@ on:
 jobs:
 
   test:
-    name: Unit Tests
+    name: Test unitarios
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,7 +25,7 @@ jobs:
         run: pytest test_api.py -v
 
   security:
-    name: Security Analysis
+    name: Analisis de seguridad
     needs: test
     runs-on: ubuntu-latest
     steps:
