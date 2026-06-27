@@ -97,6 +97,7 @@ jobs:
             ls -la /opt/tennis-api-db/database.sqlite || echo "ERROR: DB file missing"
             chmod 644 /opt/tennis-api-db/database.sqlite
 
+            docker compose down -v
             docker compose up -d --build
             echo "=== Container DB check ==="
             docker compose exec -T tennis-api ls -la /app/database.sqlite || echo "ERROR: DB not visible inside container"
