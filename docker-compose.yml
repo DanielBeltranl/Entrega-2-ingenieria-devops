@@ -6,4 +6,4 @@ services:
     env_file:
       - .env
     volumes:
-      - /opt/tennis-api-db/database.sqlite:/app/database.sqlite:ro
+      - /opt/tennis-api-db/database.sqlite:/app/database.sqlite
