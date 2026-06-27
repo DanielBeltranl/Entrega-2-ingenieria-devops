@@ -95,6 +95,7 @@ jobs:
 
             echo "=== DB file check ==="
             ls -la /opt/tennis-api-db/database.sqlite || echo "ERROR: DB file missing"
+            chmod 755 /opt/tennis-api-db
             chmod 644 /opt/tennis-api-db/database.sqlite
 
             docker compose down -v
