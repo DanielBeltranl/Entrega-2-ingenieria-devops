@@ -77,6 +77,11 @@ jobs:
           username: root
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
+            if ! command -v docker &> /dev/null; then
+              curl -fsSL https://get.docker.com | sh
+              systemctl enable docker --now
+            fi
+
             REPO_DIR=/opt/tennis-api
 
             if [ -d "$REPO_DIR/.git" ]; then
