@@ -94,9 +94,15 @@ jobs:
             [ -f .env ] || echo "APP_PORT=8000" > .env
 
             echo "=== DB file check ==="
-            ls -la /opt/tennis-api-db/database.sqlite || echo "ERROR: DB file missing"
+            if [ -d "/opt/tennis-api-db/database.sqlite" ]; then
+              echo "Fixing: database.sqlite is a directory, moving file out"
+              mv /opt/tennis-api-db/database.sqlite/database.sqlite /opt/tennis-api-db/database.sqlite.tmp
+              rm -rf /opt/tennis-api-db/database.sqlite
+              mv /opt/tennis-api-db/database.sqlite.tmp /opt/tennis-api-db/database.sqlite
+            fi
             chmod 755 /opt/tennis-api-db
             chmod 644 /opt/tennis-api-db/database.sqlite
+            ls -la /opt/tennis-api-db/
 
             docker compose down -v
             docker compose up -d --build
