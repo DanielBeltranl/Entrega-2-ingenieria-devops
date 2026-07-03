@@ -33,6 +33,13 @@ Se usan dos herramientas:
 - Dependabot: revisa las dependencias buscando vulnerabilidades conocidas
 - Snyk: análisis más completo, con umbral en severidad alto. Si encuentra algo grave, bloquea el deploy
 
+**Ejemplo**
+
+Por algun motivo, un token o api-key quedo hardcodeado en algun archivo.
+
+ - El pipeline corre, se invoca la revision con SYNK, se detecta lña precencia de la llave y se detenie el deploy, evitando que la clave llegue a produccion.  
+
+
 El repositorio también tiene Dependabot activado, que abre PRs automáticos cuando hay dependencias desactualizadas.
 
 ### Deploy en DigitalOcean
