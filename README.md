@@ -85,15 +85,15 @@ El deploy solo llega al servidor si los tests pasan y si no hay vulnerabilidades
 
 ## Secrets necesarios
 
-| Nombre | Para qué sirve                        |
-|--------|---------------------------------------|
-| `DO_HOST` | IP del servidor en DigitalOcean       |
+| Nombre | Para qué sirve                  |
+|--------|---------------------------------|
+| `DO_HOST` | IP del servidor en DigitalOcean |
 | `DO_SSH_KEY` | Clave SSH para conectarse al servidor |
-| `SNYK_TOKEN` | Token de autenticación de Snyk.       |
+| `SNYK_TOKEN` | Token de autenticación de Snyk  |
 
 
 
-## Correr el proyecto local
+## Correr el proyecto local-
 
 ```bash
 git clone https://github.com/DanielBeltranl/Entrega-2-ingenieria-devops.git
